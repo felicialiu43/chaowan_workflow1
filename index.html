@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>潮玩产品生产流程 · PRD</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+    background: #eef1f7;
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ════════════ 主画布区 ════════════ */
+  .main {
+    flex: 1;
+    padding: 40px;
+    overflow: auto;
+    transition: margin-right 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .canvas {
+    background-color: #fafbff;
+    background-image:
+      linear-gradient(rgba(180,200,230,0.22) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(180,200,230,0.22) 1px, transparent 1px);
+    background-size: 28px 28px;
+    border-radius: 22px;
+    padding: 44px 52px 56px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.08);
+    min-width: 900px;
+  }
+
+  .canvas-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .canvas-hint {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .canvas-hint span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: #9aa;
+    background: rgba(150,155,180,0.09);
+    border: 1px solid rgba(150,155,180,0.18);
+    border-radius: 20px;
+    padding: 4px 14px;
+  }
+
+  /* ════════════ 布局 ════════════ */
+  .layout {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* Row 1: phases side by side */
+  .row-phases {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+  }
+
+  /* ════════════ 阶段容器 ════════════ */
+  .phase {
+    border-radius: 18px;
+    padding: 24px 26px 28px;
+  }
+
+  .phase-1 {
+    flex: 1;
+    background: rgba(216,191,255,0.16);
+    border: 1.5px solid rgba(160,110,220,0.35);
+  }
+  .phase-2 {
+    flex: 1;
+    background: rgba(255,218,160,0.16);
+    border: 1.5px solid rgba(220,160,70,0.35);
+  }
+  .phase-3 {
+    background: rgba(160,210,240,0.14);
+    border: 1.5px solid rgba(80,160,210,0.32);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334;
+    margin-bottom: 22px;
+  }
+
+  .phase-corner {
+    width: 16px; height: 13px;
+    border: 1.5px solid #c0c8d8;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .phase-corner::after {
+    content: ''; width: 7px; height: 1.5px;
+    background: #c0c8d8; border-radius: 1px;
+  }
+
+  /* ════════════ 节点 ════════════ */
+  .node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    padding: 10px 15px;
+    min-width: 100px;
+    max-width: 140px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: box-shadow 0.16s, transform 0.14s;
+    outline: 2.5px solid transparent;
+    outline-offset: 2px;
+  }
+  .node:hover {
+    box-shadow: 0 5px 16px rgba(0,0,0,0.13);
+    transform: translateY(-1px);
+  }
+  .node.selected {
+    outline: 2.5px solid #5b7fff;
+    box-shadow: 0 0 0 4px rgba(91,127,255,0.14), 0 5px 16px rgba(0,0,0,0.1);
+  }
+
+  /* 节点文字 — 直接可编辑 */
+  .node-label {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #2c3e50;
+    font-weight: 500;
+    outline: none;
+    cursor: text;
+    min-width: 1px;  /* keeps contenteditable focusable when empty */
+    border-radius: 4px;
+    padding: 1px 2px;
+    transition: background 0.15s;
+  }
+  .node-label:focus {
+    background: rgba(91,127,255,0.07);
+  }
+  .node-label:empty::before {
+    content: '输入文字…';
+    color: #ccc;
+    font-weight: 400;
+  }
+
+  /* Feature 数量徽章 */
+  .feat-badge {
+    position: absolute;
+    top: -8px; right: -8px;
+    min-width: 19px; height: 19px;
+    border-radius: 10px;
+    background: #5b7fff;
+    color: #fff;
+    font-size: 10px; font-weight: 700;
+    display: none; align-items: center; justify-content: center;
+    padding: 0 4px;
+    border: 1.5px solid #fff;
+    box-shadow: 0 2px 5px rgba(91,127,255,0.4);
+  }
+  .feat-badge.show { display: flex; }
+
+  /* 节点颜色 */
+  .node-blue   { background: #e6f3ff; border: 1.5px solid #85b8f0; }
+  .node-green  { background: #e4f9ee; border: 1.5px solid #72c98e; }
+  .node-yellow { background: #fffbdc; border: 1.5px solid #e8c830; }
+  .node-orange { background: #fff3e5; border: 1.5px solid #e89a60; }
+  .node-purple { background: #f2edff; border: 1.5px solid #a07de0; }
+  .node-pink   { background: #fff0f7; border: 1.5px solid #e880b8; }
+  .node-teal   { background: #e4f8f5; border: 1.5px solid #60c8b8; }
+
+  /* ════════════ 箭头 ════════════ */
+  .arrow-h {
+    flex-shrink: 0;
+    padding: 0 3px;
+    display: flex;
+    align-items: center;
+  }
+  .arrow-h svg { width: 28px; height: 16px; overflow: visible; }
+
+  /* ════════════ 分叉布局 ════════════ */
+  .fork-flow {
+    display: flex;
+    align-items: center;
+  }
+
+  /* 从共享节点到分叉竖条的水平连线 */
+  .connector-to-fork {
+    width: 18px;
+    height: 1.5px;
+    background: #b4bcd0;
+    flex-shrink: 0;
+  }
+
+  /* 分叉竖条 + 路径区域 */
+  .fork-body {
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+  }
+
+  /* 竖线 */
+  .fork-bar {
+    width: 1.5px;
+    background: #b4bcd0;
+    flex-shrink: 0;
+    align-self: stretch;
+  }
+
+  /* 路径堆叠区 */
+  .paths-stack {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+    gap: 18px;
+  }
+
+  /* 单条路径行 */
+  .path-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* 路径标签 */
+  .path-tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-right: 0;
+  }
+  .tag-a { background: #9b7fe8; }
+  .tag-b { background: #e8a060; }
+
+  /* 从竖线到第一个节点的水平臂 */
+  .fork-arm {
+    width: 14px;
+    height: 1.5px;
+    background: #b4bcd0;
+    flex-shrink: 0;
+  }
+
+  /* ════════════ 线性流布局（打样） ════════════ */
+  .linear-flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    row-gap: 14px;
+  }
+
+  /* ════════════ 右侧 Feature 面板 ════════════ */
+  .panel {
+    width: 355px;
+    min-width: 355px;
+    background: #fff;
+    border-left: 1px solid #e4e8f0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: 0; top: 0; bottom: 0;
+    z-index: 200;
+    box-shadow: -4px 0 24px rgba(0,0,0,0.07);
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .panel.open { transform: translateX(0); }
+
+  .panel-header {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid #eef0f5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .panel-node-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2c3e50;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .panel-close {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    border: none; background: #f0f2f7;
+    cursor: pointer; font-size: 13px; color: #666;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .panel-close:hover { background: #e0e4ef; }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+  }
+
+  .section-head {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #8890a8;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 12px;
+  }
+
+  .btn-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    padding: 8px 14px;
+    border: 1.5px dashed #c4cce0;
+    border-radius: 10px;
+    background: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: #8890a8;
+    font-family: inherit;
+    margin-top: 10px;
+    transition: border-color 0.14s, color 0.14s, background 0.14s;
+  }
+  .btn-add:hover {
+    border-color: #5b7fff;
+    color: #5b7fff;
+    background: rgba(91,127,255,0.04);
+  }
+
+  /* Feature 卡 */
+  .feat-card {
+    background: #f7f9fc;
+    border: 1.5px solid #e8ecf5;
+    border-radius: 11px;
+    padding: 13px 13px 11px;
+    margin-bottom: 9px;
+  }
+  .feat-card:last-child { margin-bottom: 0; }
+
+  .feat-title {
+    width: 100%;
+    font-size: 13px; font-weight: 600; color: #1a1e2e;
+    border: none; outline: none; background: transparent;
+    font-family: inherit; padding: 0; margin-bottom: 8px;
+  }
+  .feat-title::placeholder { color: #ccc; font-weight: 400; }
+
+  .feat-desc {
+    width: 100%;
+    font-size: 12px; color: #555;
+    border: 1px solid #dde3f0;
+    border-radius: 8px;
+    background: #fff;
+    font-family: inherit;
+    padding: 7px 10px;
+    resize: none; outline: none;
+    line-height: 1.55;
+    min-height: 58px;
+    transition: border-color 0.14s;
+  }
+  .feat-desc:focus { border-color: #5b7fff; }
+  .feat-desc::placeholder { color: #ccc; }
+
+  .feat-meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 9px;
+  }
+
+  .prio-sel, .stat-sel {
+    font-size: 11px; font-weight: 600;
+    border: none; outline: none; cursor: pointer;
+    border-radius: 6px; padding: 4px 8px;
+    font-family: inherit;
+    appearance: none; -webkit-appearance: none;
+  }
+  .prio-sel { background: #fff3cd; color: #856404; }
+  .prio-sel.p0 { background: #fde8e8; color: #c0392b; }
+  .prio-sel.p1 { background: #fff3cd; color: #856404; }
+  .prio-sel.p2 { background: #e8f4ff; color: #1a5fab; }
+  .prio-sel.p3 { background: #f0f0f0; color: #666; }
+
+  .stat-sel { background: #eef5ff; color: #3a6abf; }
+  .stat-sel.todo    { background: #f4f4f4; color: #888; }
+  .stat-sel.doing   { background: #fff8e6; color: #b07800; }
+  .stat-sel.done    { background: #e6f9ee; color: #267a45; }
+  .stat-sel.blocked { background: #fde8e8; color: #c0392b; }
+
+  .feat-del {
+    margin-left: auto;
+    background: none; border: none; cursor: pointer;
+    color: #ccc; font-size: 13px; padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.14s, background 0.14s;
+    line-height: 1;
+  }
+  .feat-del:hover { color: #e74c3c; background: #fde8e8; }
+
+  /* 自动保存提示 */
+  .save-toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: rgba(40,44,60,0.88);
+    color: #fff;
+    font-size: 12px;
+    padding: 7px 18px;
+    border-radius: 20px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .save-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 28px 16px;
+    color: #bbb; font-size: 12.5px; line-height: 1.9;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════ 主画布 ════════════ -->
+<div class="main" id="main">
+<div class="canvas">
+
+  <div class="canvas-title">潮玩产品生产流程</div>
+  <div class="canvas-hint">
+    <span>点击节点文字直接编辑 &nbsp;·&nbsp; 点击节点背景打开 Feature 面板</span>
+  </div>
+
+  <div class="layout">
+
+    <!-- ── Row 1：产品评估 + 合同 并排 ── -->
+    <div class="row-phases">
+
+      <!-- ══ 阶段1：产品评估 ══ -->
+      <div class="phase phase-1">
+        <div class="phase-header">
+          <div class="phase-corner"></div>
+          阶段1：产品评估
+        </div>
+
+        <div class="fork-flow">
+
+          <!-- 共享起点 -->
+          <div class="node node-blue" data-id="p1s" onclick="openPanel(this)">
+            <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">上传产品评估书</span>
+            <span class="feat-badge" id="fb-p1s"></span>
+          </div>
+
+          <!-- 连线 + 分叉 -->
+          <div class="connector-to-fork"></div>
+          <div class="fork-body">
+            <div class="fork-bar"></div>
+            <div class="paths-stack">
+
+              <!-- 路径 A -->
+              <div class="path-row">
+                <div class="path-tag tag-a">A</div>
+                <div class="fork-arm"></div>
+                <div class="node node-green" data-id="p1a1" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">客户确认</span>
+                  <span class="feat-badge" id="fb-p1a1"></span>
+                </div>
+              </div>
+
+              <!-- 路径 B -->
+              <div class="path-row">
+                <div class="path-tag tag-b">B</div>
+                <div class="fork-arm"></div>
+                <div class="node node-yellow" data-id="p1b1" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">客户加需求</span>
+                  <span class="feat-badge" id="fb-p1b1"></span>
+                </div>
+                <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+                <div class="node node-orange" data-id="p1b2" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">更新评估书和报价单</span>
+                  <span class="feat-badge" id="fb-p1b2"></span>
+                </div>
+                <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+                <div class="node node-green" data-id="p1b3" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">客户确认</span>
+                  <span class="feat-badge" id="fb-p1b3"></span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div><!-- /phase-1 -->
+
+
+      <!-- ══ 阶段2：合同 ══ -->
+      <div class="phase phase-2">
+        <div class="phase-header">
+          <div class="phase-corner"></div>
+          阶段2：合同
+        </div>
+
+        <div class="fork-flow">
+
+          <!-- 共享起点 -->
+          <div class="node node-purple" data-id="p2s" onclick="openPanel(this)">
+            <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">自动生成合同</span>
+            <span class="feat-badge" id="fb-p2s"></span>
+          </div>
+
+          <!-- 连线 + 分叉 -->
+          <div class="connector-to-fork"></div>
+          <div class="fork-body">
+            <div class="fork-bar"></div>
+            <div class="paths-stack">
+
+              <!-- 路径 A -->
+              <div class="path-row">
+                <div class="path-tag tag-a">A</div>
+                <div class="fork-arm"></div>
+                <div class="node node-green" data-id="p2a1" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">客户签署</span>
+                  <span class="feat-badge" id="fb-p2a1"></span>
+                </div>
+                <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+                <div class="node node-pink" data-id="p2a2" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">打款</span>
+                  <span class="feat-badge" id="fb-p2a2"></span>
+                </div>
+              </div>
+
+              <!-- 路径 B -->
+              <div class="path-row">
+                <div class="path-tag tag-b">B</div>
+                <div class="fork-arm"></div>
+                <div class="node node-yellow" data-id="p2b1" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">修改/沟通</span>
+                  <span class="feat-badge" id="fb-p2b1"></span>
+                </div>
+                <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+                <div class="node node-green" data-id="p2b2" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">客户签署</span>
+                  <span class="feat-badge" id="fb-p2b2"></span>
+                </div>
+                <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+                <div class="node node-pink" data-id="p2b3" onclick="openPanel(this)">
+                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">打款</span>
+                  <span class="feat-badge" id="fb-p2b3"></span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div><!-- /phase-2 -->
+
+    </div><!-- /row-phases -->
+
+
+    <!-- ── Row 2：打样（全宽线性流） ── -->
+    <div class="phase phase-3">
+      <div class="phase-header">
+        <div class="phase-corner"></div>
+        阶段3：打样
+      </div>
+
+      <div class="linear-flow">
+
+        <div class="node node-blue" data-id="p3-1" onclick="openPanel(this)">
+          <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">打样</span>
+          <span class="feat-badge" id="fb-p3-1"></span>
+        </div>
+
+        <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+
+        <div class="node node-yellow" data-id="p3-2" onclick="openPanel(this)">
+          <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">给STL文件<br>+ 图片确认</span>
+          <span class="feat-badge" id="fb-p3-2"></span>
+        </div>
+
+        <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+
+        <div class="node node-orange" data-id="p3-3" onclick="openPanel(this)">
+          <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">打白蜡<br>确认结构</span>
+          <span class="feat-badge" id="fb-p3-3"></span>
+        </div>
+
+        <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+
+        <div class="node node-purple" data-id="p3-4" onclick="openPanel(this)">
+          <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">修改<br>3D建模</span>
+          <span class="feat-badge" id="fb-p3-4"></span>
+        </div>
+
+        <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+
+        <div class="node node-yellow" data-id="p3-5" onclick="openPanel(this)">
+          <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">再给STL文件<br>+ 图片确认</span>
+          <span class="feat-badge" id="fb-p3-5"></span>
+        </div>
+
+        <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+
+        <div class="node node-pink" data-id="p3-6" onclick="openPanel(this)">
+          <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">红蜡 + 上色<br>样板确认</span>
+          <span class="feat-badge" id="fb-p3-6"></span>
+        </div>
+
+        <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
+
+        <div class="node node-green" data-id="p3-7" onclick="openPanel(this)">
+          <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">客户确认样品</span>
+          <span class="feat-badge" id="fb-p3-7"></span>
+        </div>
+
+      </div>
+    </div><!-- /phase-3 -->
+
+  </div><!-- /layout -->
+</div><!-- /canvas -->
+</div><!-- /main -->
+
+
+<!-- ════════════ Feature 面板 ════════════ -->
+<div class="panel" id="panel">
+
+  <div class="panel-header">
+    <span class="panel-node-name" id="panelName">节点</span>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+
+  <div class="panel-body" id="panelBody">
+    <div class="section-head">Feature 列表</div>
+    <div id="featList"></div>
+    <button class="btn-add" onclick="addFeature()">＋ 添加 Feature</button>
+  </div>
+
+
+</div>
+
+
+<div class="save-toast" id="saveToast">已自动保存</div>
+
+<script>
+// ════════════ 持久化（localStorage） ════════════
+const STORAGE_KEY = 'potoy_prd_v1';
+let saveTimer = null;
+
+function saveAll() {
+  // 1. 收集节点文字
+  const nodeTexts = {};
+  document.querySelectorAll('.node[data-id]').forEach(el => {
+    const label = el.querySelector('.node-label');
+    if (label) nodeTexts[el.dataset.id] = label.innerHTML;
+  });
+  // 2. 写入
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ store, nodeTexts }));
+  } catch(e) {}
+  // 3. 提示
+  showToast();
+}
+
+function loadAll() {
+  let raw;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+  if (!raw) return;
+  try {
+    const { store: savedStore, nodeTexts } = JSON.parse(raw);
+    // 恢复 feature 数据
+    if (savedStore) {
+      Object.assign(store, savedStore);
+      let maxId = 0;
+      Object.values(store).forEach(d =>
+        d.features.forEach(f => { if (f.id > maxId) maxId = f.id; })
+      );
+      featureCtr = maxId;
+      Object.keys(store).forEach(id => updateBadge(id));
+    }
+    // 恢复节点文字
+    if (nodeTexts) {
+      Object.entries(nodeTexts).forEach(([id, html]) => {
+        const el = document.querySelector(`[data-id="${id}"] .node-label`);
+        if (el) el.innerHTML = html;
+      });
+    }
+  } catch(e) {}
+}
+
+function showToast() {
+  const t = document.getElementById('saveToast');
+  t.classList.add('show');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => t.classList.remove('show'), 1400);
+}
+
+// ════════════ 数据层（内存） ════════════
+const store = {};       // { nodeId: { features: [...] } }
+let currentId   = null;
+let featureCtr  = 0;
+
+function getStore(id) {
+  if (!store[id]) store[id] = { features: [] };
+  return store[id];
+}
+
+// ════════════ 面板开 / 关 ════════════
+function openPanel(el) {
+  const id = el.dataset.id;
+  if (!id) return;
+
+  // 取消之前选中
+  if (currentId) {
+    const prev = document.querySelector(`[data-id="${currentId}"]`);
+    if (prev) prev.classList.remove('selected');
+  }
+
+  currentId = id;
+  el.classList.add('selected');
+
+  // 面板标题读自节点文字
+  const labelEl = el.querySelector('.node-label');
+  const title   = labelEl ? (labelEl.innerText || labelEl.textContent).trim() : id;
+  document.getElementById('panelName').textContent = title;
+
+  renderFeats(id);
+
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('main').style.marginRight = '355px';
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  document.getElementById('main').style.marginRight = '0';
+  if (currentId) {
+    const el = document.querySelector(`[data-id="${currentId}"]`);
+    if (el) el.classList.remove('selected');
+    currentId = null;
+  }
+}
+
+// ════════════ Feature CRUD ════════════
+function addFeature() {
+  if (!currentId) return;
+  featureCtr++;
+  getStore(currentId).features.push({
+    id: featureCtr,
+    title: '',
+    desc: '',
+    priority: 'p1',
+    status: 'todo'
+  });
+  renderFeats(currentId);
+  saveAll();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.feat-title');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 40);
+}
+
+function delFeature(fid) {
+  if (!currentId) return;
+  const s = getStore(currentId);
+  s.features = s.features.filter(f => f.id !== fid);
+  renderFeats(currentId);
+  updateBadge(currentId);
+  saveAll();
+}
+
+function setField(fid, field, value) {
+  if (!currentId) return;
+  const f = getStore(currentId).features.find(f => f.id === fid);
+  if (!f) return;
+  f[field] = value;
+  if (field === 'priority' || field === 'status') {
+    const sel = document.querySelector(`[data-fid="${fid}"] .${field === 'priority' ? 'prio-sel' : 'stat-sel'}`);
+    if (sel) sel.className = `${field === 'priority' ? 'prio-sel' : 'stat-sel'} ${value}`;
+  }
+  updateBadge(currentId);
+  saveAll();
+}
+
+// ════════════ 渲染 ════════════
+function renderFeats(id) {
+  const { features } = getStore(id);
+  const list = document.getElementById('featList');
+
+  if (!features.length) {
+    list.innerHTML = `<div class="empty-state">还没有 Feature<br>点下方按钮添加第一个需求</div>`;
+    updateBadge(id);
+    return;
+  }
+
+  list.innerHTML = features.map(f => `
+    <div class="feat-card" data-fid="${f.id}">
+      <input class="feat-title"
+        placeholder="Feature 名称（如：自动填充模板）"
+        value="${esc(f.title)}"
+        oninput="setField(${f.id},'title',this.value)"
+      />
+      <textarea class="feat-desc"
+        placeholder="描述需求背景、验收标准、边界条件…"
+        oninput="setField(${f.id},'desc',this.value)"
+      >${esc(f.desc)}</textarea>
+      <div class="feat-meta">
+        <select class="prio-sel ${f.priority}"
+          onchange="setField(${f.id},'priority',this.value); this.className='prio-sel '+this.value">
+          <option value="p0" ${f.priority==='p0'?'selected':''}>P0 紧急</option>
+          <option value="p1" ${f.priority==='p1'?'selected':''}>P1 高</option>
+          <option value="p2" ${f.priority==='p2'?'selected':''}>P2 中</option>
+          <option value="p3" ${f.priority==='p3'?'selected':''}>P3 低</option>
+        </select>
+        <select class="stat-sel ${f.status}"
+          onchange="setField(${f.id},'status',this.value); this.className='stat-sel '+this.value">
+          <option value="todo"    ${f.status==='todo'   ?'selected':''}>待定</option>
+          <option value="doing"   ${f.status==='doing'  ?'selected':''}>进行中</option>
+          <option value="done"    ${f.status==='done'   ?'selected':''}>已完成</option>
+          <option value="blocked" ${f.status==='blocked'?'selected':''}>受阻</option>
+        </select>
+        <button class="feat-del" onclick="delFeature(${f.id})">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  updateBadge(id);
+}
+
+function updateBadge(id) {
+  const { features } = getStore(id);
+  const el = document.getElementById(`fb-${id}`);
+  if (!el) return;
+  el.textContent = features.length;
+  el.classList.toggle('show', features.length > 0);
+}
+
+// ════════════ 工具 ════════════
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 节点文字变化 → 自动保存
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('node-label')) {
+    // 同步面板标题
+    if (currentId) {
+      const node = document.querySelector(`[data-id="${currentId}"]`);
+      if (node && node.contains(e.target)) {
+        document.getElementById('panelName').textContent =
+          (e.target.innerText || '').trim();
+      }
+    }
+    saveAll();
+  }
+  // feature 卡片文字变化 → 自动保存（title / desc input 已有 oninput 绑定 setField，setField 里已调 saveAll）
+});
+
+// Esc 关闭
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+// ════════════ 页面加载 ════════════
+document.addEventListener('DOMContentLoaded', loadAll);
+</script>
+</body>
+</html>
