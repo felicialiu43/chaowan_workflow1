@@ -91,6 +91,10 @@
     border: 1.5px solid rgba(220,160,70,0.35);
   }
   .phase-3 {
+    background: rgba(255,200,200,0.16);
+    border: 1.5px solid rgba(220,100,120,0.35);
+  }
+  .phase-4 {
     background: rgba(160,210,240,0.14);
     border: 1.5px solid rgba(80,160,210,0.32);
   }
@@ -559,11 +563,6 @@
                   <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">客户签署</span>
                   <span class="feat-badge" id="fb-p2a1"></span>
                 </div>
-                <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
-                <div class="node node-pink" data-id="p2a2" onclick="openPanel(this)">
-                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">打款</span>
-                  <span class="feat-badge" id="fb-p2a2"></span>
-                </div>
               </div>
 
               <!-- 路径 B -->
@@ -579,11 +578,6 @@
                   <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">客户签署</span>
                   <span class="feat-badge" id="fb-p2b2"></span>
                 </div>
-                <div class="arrow-h"><svg viewBox="0 0 28 16" fill="none"><line x1="0" y1="8" x2="21" y2="8" stroke="#b4bcd0" stroke-width="1.5"/><polygon points="21,4 28,8 21,12" fill="#b4bcd0"/></svg></div>
-                <div class="node node-pink" data-id="p2b3" onclick="openPanel(this)">
-                  <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">打款</span>
-                  <span class="feat-badge" id="fb-p2b3"></span>
-                </div>
               </div>
 
             </div>
@@ -594,11 +588,27 @@
     </div><!-- /row-phases -->
 
 
-    <!-- ── Row 2：打样（全宽线性流） ── -->
+    <!-- ── Row 2：打款 ── -->
     <div class="phase phase-3">
       <div class="phase-header">
         <div class="phase-corner"></div>
-        阶段3：打样
+        阶段3：打款
+      </div>
+
+      <div class="linear-flow">
+        <div class="node node-pink" data-id="p3-pay" onclick="openPanel(this)">
+          <span class="node-label" contenteditable="true" onclick="event.stopPropagation()" spellcheck="false">打款</span>
+          <span class="feat-badge" id="fb-p3-pay"></span>
+        </div>
+      </div>
+    </div><!-- /phase-3 -->
+
+
+    <!-- ── Row 3：打样（全宽线性流） ── -->
+    <div class="phase phase-4">
+      <div class="phase-header">
+        <div class="phase-corner"></div>
+        阶段4：打样
       </div>
 
       <div class="linear-flow">
